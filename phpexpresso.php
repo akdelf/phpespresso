@@ -1,6 +1,17 @@
-
 <?
+
+
+	/**
+	*
+	*/
+
+
 	class phpexpresso {
+
+		/**
+		* @files - список файлов-постов
+		*/
+		var $files = array();
 
 		/**
 		*формируем из шаблона готовую html страницу
@@ -26,17 +37,48 @@
 		/**
 		*формируем список рубрик
 		*/
-		private function category() {
+		private function gencategory() {
 
 			}	
 
+		public function generation() {
 
-		private function dirlist($path) {
+			return $this->dirlist('source/posts');
+		}	
+
+
+		private function dirlist($dir) {
+
 			$flist = scandir($dir);
 			array_shift($flist);
         	array_shift($flist);
-        	return $flist;
+        	foreach ($flist as $file) {
+        		if (is_dir($file)) {
+        			$arr = $this->dirlist($file);
+        		}		
+        		
+        		elseif(is_file($file) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
+        			$this->files[$file] = filemtime($file);
+        		
+        		}	
+        	}
+        		return $flist;
+			
 			}	
+
+
+		
+		/**
+		* вывод последних постов
+		*/
+		private function endpost($limit = 10) {
+			return array_slice($input, 0, $limit);
+		}
+
+
+		private function genpage($content) {
+
+		}
 
 
 		/**
@@ -44,4 +86,7 @@
 		*/
 		private function genlayout(){
 
-			}	
+			}
+
+	}		
+
