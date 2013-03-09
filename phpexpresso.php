@@ -1,4 +1,4 @@
-<?
+<?php 
 
 
 	/**
@@ -6,15 +6,27 @@
 	*/
 
 
-	class phpexpresso {
+	class phpespresso {
 
 		/**
 		* @files - список файлов-постов
 		*/
-		var $files = array();
-		var $params = array();
-		var $psource = '/source';
-		var $phtml = '/html';
+		private $files = array();
+		private $params = array();
+		private $path = array();
+		
+
+
+		/**
+		* конфигурация директорий приложений
+		*/
+		function __construct($dir){
+			
+			$this->path['source'] = $dir.'/source';
+			$this->path['presult'] = $dir.'/html';
+			$this->path['player'] = $dir.'/layer';
+			
+			} 
 
 
 		/**
@@ -38,6 +50,7 @@
 			
 			}
 
+		
 		/**
 		*формируем список рубрик
 		*/
@@ -48,9 +61,10 @@
 		public function generation() {
 
 			return $this->dirlist('app/source');
-		}	
+			}	
 
 
+		
 		private function dirlist($dir) {
 
 			$flist = scandir($dir);
@@ -99,9 +113,7 @@
 				}	
    			
    				fclose($handle); 
-			} 
-
-		}	
+			}}	
 
 
 		/**
@@ -121,21 +133,23 @@
 		
 			return False;
 
-		}
+			}
 
 
-		private functon pagerender($file) {
+		private function pagerender($layer, $file) {
 
-			$content = markdown($file);
+			$content = markdown($this->path['source'].$file);
 
 			//получаем результат
 			ob_start();
-			include('');
-			$result = trim(ob_get_contents());
+				include($this->path['layer'].$layer);
+				$result = trim(ob_get_contents());
 			ob_end_clean();	
 
-			file_put_contents(filename, $result);
-		}
+			$htmlfile = $this->path['result'].str_replace('.md', '.html', $file);
+			file_put_contents($htmlfile, $result);
+
+			}
 			
 
 
@@ -144,12 +158,12 @@
 		*/
 		private function endpost($limit = 10) {
 			return array_slice($input, 0, $limit);
-		}
+			}
 
 
 		private function genpage($content) {
 
-		}
+			}
 
 
 		/**
