@@ -5,6 +5,7 @@
 
 	//генериим сайт
 	$expresso = new phpexpresso();
-	$expresso->generation();
+	//$expresso->generation();
+	$expresso->pageconfig('app/source/2013/1.md');
 
 
