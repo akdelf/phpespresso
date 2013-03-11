@@ -12,7 +12,7 @@
 		* @files - список файлов-постов
 		*/
 		private $files = array();
-		private $params = array();
+		private $pg_params = array();
 		private $path = array();
 		
 
@@ -22,9 +22,9 @@
 		*/
 		function __construct($dir){
 			
-			$this->path['source'] = $dir.'/source';
-			$this->path['presult'] = $dir.'/html';
-			$this->path['player'] = $dir.'/layer';
+			$this->path['source'] = $dir.'/app/source/';
+			$this->path['presult'] = $dir.'/app/html/';
+			$this->path['player'] = $dir.'/app/theme/';
 			
 			} 
 
@@ -40,9 +40,9 @@
 		/**
 		*получаем данные о текущей странице
 		*/
-		private function page () {			
+		private function page() {			
 
-			$dir = 'source/posts';
+			$dir = 'source/posts/';
 			$flist = dirlist($dir); //анализируем папку с контентом
 			foreach ($flist as $file){
 
@@ -58,31 +58,34 @@
 
 			}	
 
+		
 		public function generation() {
 
-			return $this->dirlist('app/source');
+			return $this->dirlist($this->path['source']);
+
 			}	
 
 
 		
 		private function dirlist($dir) {
-
+			
 			$flist = scandir($dir);
 			array_shift($flist);
         	array_shift($flist);
+
         	foreach ($flist as $file) {
-        		echo $file;
-        		if (is_dir($file)) {
-        			$arr = $this->dirlist($dir.$file);
-        		}		
+        		$ffull = $dir.$file;
         		
-        		elseif(is_file($file) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
-        			$this->files[$file] = filemtime($file);
+        		if (is_dir($ffull)) {	
+        			$arr = $this->dirlist($dir.$file.'/');
+        		}		
+        		elseif(is_file($ffull) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
+        			$this->pageconfig($ffull);
         		
         		}	
         	}
         		
-        		print_r($this->files);
+        		print_r($this->pg_params);
         		return $flist;
 			
 			}	
@@ -95,29 +98,34 @@
 		*/
 		public function pageconfig($source) {
 			
-			$param = array();
+
+			$params = array();
 			$start = False; 
 
 			$handle = @fopen($source, "r"); 
 			if ($handle) { 
    				while (!feof($handle)) { 
        				$line ++;
-       				$line = fgets($handle, 4096);
-       				if ($line == '---'){
+       				$str = fgets($handle, 4096);
+       				if ($str == '---'){
        					if ($start) 
 							break;
 						$start = True;	
        				}
-       				elseif ($param = $this->parse_param($line))
-						$this->params[] = $param;	
+       				elseif ($cparams = $this->parse_param($str))
+       					$params[$cparams['name']] = $cparams['value'];									
 				}	
    			
+   				$params['source'] = $source;
+   				$this->pg_params[$params['date']] = $params;
+
    				fclose($handle); 
 			}}	
 
 
+		
 		/**
-		* определяем группу параметров
+		* добавляем порцию параметров
 		*
 		*/
 		private function parse_param($row){
@@ -127,7 +135,7 @@
 			if ($pos > 0) {
 				$name = substr($row, 0, $pos);
 				$value = substr($row, $pos + 1);
-				
+		
 				return array('name'=>$name, 'value'=>$value);
 			}
 		
@@ -138,7 +146,8 @@
 
 		private function pagerender($layer, $file) {
 
-			$content = markdown($this->path['source'].$file);
+			//$content = markdown($this->path['source'].$file);
+			$content = file_get_contents($this->path['source'].$file);
 
 			//получаем результат
 			ob_start();
