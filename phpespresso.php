@@ -5,6 +5,7 @@
 	*
 	*/
 
+	require ('markdown/markdown.php');
 
 	class phpespresso {
 
@@ -20,17 +21,19 @@
 		/**
 		* конфигурация директорий приложений
 		*/
-		function __construct($dir){
+		function __construct($basedir){
 			
-			$this->path['source'] = $dir.'/app/source/';
-			$this->path['presult'] = $dir.'/app/html/';
-			$this->path['player'] = $dir.'/app/theme/';
+			$this->path['source'] = $basedir.'/app/source/';
+			$this->path['presult'] = $basedir.'/app/html/';
+			$this->path['layer'] = $basedir.'/app/theme/';
+			$this->path['config'] = $basedir.'/cache/config/';
+			$this->path['html'] = $basedir.'/cache/html/';
 			
 			} 
 
 
 		/**
-		*формируем из шаблона готовую html страницу
+		* формируем из шаблона готовую html страницу
 		*/
 		function render() {
 
@@ -38,7 +41,7 @@
 
 
 		/**
-		*получаем данные о текущей странице
+		* получаем данные о текущей странице
 		*/
 		private function page() {			
 
@@ -80,15 +83,11 @@
         			$arr = $this->dirlist($dir.$file.'/');
         		}		
         		elseif(is_file($ffull) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
-        			$this->pageconfig($ffull);
-        		
-        		}	
+        			$this->render_page($ffull);
+        		}
         	}
-        		
-        		print_r($this->pg_params);
-        		return $flist;
-			
-			}	
+        		        		
+        	return $flist;}	
 
 
 		
@@ -96,7 +95,7 @@
 		* определяем параметры страницы	
 		* @source - файл с основным контентом страницы
 		*/
-		public function pageconfig($source) {
+		public function render_page($source) {
 			
 
 			$params = array();
@@ -105,21 +104,28 @@
 			$handle = @fopen($source, "r"); 
 			if ($handle) { 
    				while (!feof($handle)) { 
-       				$line ++;
-       				$str = fgets($handle, 4096);
-       				if ($str == '---'){
-       					if ($start) 
-							break;
-						$start = True;	
-       				}
-       				elseif ($cparams = $this->parse_param($str))
-       					$params[$cparams['name']] = $cparams['value'];									
+       				$str = trim(fgets($handle, 4096));
+       				if ($str == '---')
+       					$start = !$start;
+       				elseif($start) {
+						if ($cparams = $this->parse_param($str)) // если параметр а не пустая строка
+       						$params[$cparams['name']] = $cparams['value'];
+       				}		
+       				else
+       					$content .= "\n".$str;
+       														
 				}	
    			
    				$params['source'] = $source;
+   				$params['content'] = Markdown($content);
+
+   			  	$newfile = str_replace(array(' ', '-', ':'), '_', $params['date']);
+   				
    				$this->pg_params[$params['date']] = $params;
+   				file_put_contents($this->path['config'].$newfile.'.json', json_encode($params));
 
    				fclose($handle); 
+
 			}}	
 
 
@@ -136,14 +142,13 @@
 				$name = substr($row, 0, $pos);
 				$value = substr($row, $pos + 1);
 		
-				return array('name'=>$name, 'value'=>$value);
+				return array('name'=>trim($name), 'value'=>trim($value));
 			}
 		
-			return False;
-
-			}
+			return False;}
 
 
+		
 		private function pagerender($layer, $file) {
 
 			//$content = markdown($this->path['source'].$file);
