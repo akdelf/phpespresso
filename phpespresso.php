@@ -26,8 +26,8 @@
 			$this->path['source'] = $basedir.'/app/source/';
 			$this->path['presult'] = $basedir.'/app/html/';
 			$this->path['layer'] = $basedir.'/app/theme/';
-			$this->path['config'] = $basedir.'/cache/config/';
-			$this->path['html'] = $basedir.'/cache/html/';
+			$this->path['json'] = $basedir.'/cache/json/';
+			$this->path['result'] = $basedir.'/site/';
 			
 			} 
 
@@ -64,26 +64,29 @@
 		
 		public function generation() {
 
-			return $this->dirlist($this->path['source']);
+			return $this->dirlist();
 
 			}	
 
 
 		
-		private function dirlist($dir) {
+		private function dirlist($dir = '') {
 			
-			$flist = scandir($dir);
+			$full_dir = $this->path['source'].$dir;
+
+
+			$flist = scandir($full_dir);
 			array_shift($flist);
         	array_shift($flist);
 
         	foreach ($flist as $file) {
-        		$ffull = $dir.$file;
+        		$full_file = $full_dir.$file;
         		
-        		if (is_dir($ffull)) {	
+        		if (is_dir($full_file)) {	
         			$arr = $this->dirlist($dir.$file.'/');
         		}		
-        		elseif(is_file($ffull) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
-        			$this->render_page($ffull);
+        		elseif(is_file($full_file) and pathinfo($file, PATHINFO_EXTENSION) == 'md'){
+        			$this->render_page($dir.$file);
         		}
         	}
         		        		
@@ -97,11 +100,12 @@
 		*/
 		public function render_page($source) {
 			
+			$filename = $this->path['source'].$source;	
 
 			$params = array();
 			$start = False; 
 
-			$handle = @fopen($source, "r"); 
+			$handle = @fopen($filename, "r"); 
 			if ($handle) { 
    				while (!feof($handle)) { 
        				$str = trim(fgets($handle, 4096));
@@ -113,20 +117,39 @@
        				}		
        				else
        					$content .= "\n".$str;
-       														
+ 												
 				}	
    			
-   				$params['source'] = $source;
+   				$params['source'] = $filename;
    				$params['content'] = Markdown($content);
 
-   			  	$newfile = str_replace(array(' ', '-', ':'), '_', $params['date']);
+   			  	$newfile = $this->path['json'].str_replace('.md','.json', $source);   				
    				
-   				$this->pg_params[$params['date']] = $params;
-   				file_put_contents($this->path['config'].$newfile.'.json', json_encode($params));
+   				$this->file_save($newfile, json_encode($params)); //page json
+   				$this->page_html($params, $source);
+
+
+   				$this->files[$params['date']] = $newfile;
 
    				fclose($handle); 
 
-			}}	
+			}}
+
+		
+		/**
+		* saved file and create directory
+		*/
+		private function file_save($file, $content) {
+			
+			$dir = dirname($file);
+
+			if (!is_dir($dir))
+				if (!mkdir($dir, 0775, True))
+					return False;
+
+			return file_put_contents($file, $content);	
+
+		}		
 
 
 		
@@ -149,19 +172,15 @@
 
 
 		
-		private function pagerender($layer, $file) {
-
-			//$content = markdown($this->path['source'].$file);
-			$content = file_get_contents($this->path['source'].$file);
+		private function page_html($c, $file) {
 
 			//получаем результат
 			ob_start();
-				include($this->path['layer'].$layer);
+				include($this->path['layer'].'layer.phtml');
 				$result = trim(ob_get_contents());
 			ob_end_clean();	
 
-			$htmlfile = $this->path['result'].str_replace('.md', '.html', $file);
-			file_put_contents($htmlfile, $result);
+			return $this->file_save($this->path['result'].str_replace('.md', '.html', $file), $result);
 
 			}
 			
