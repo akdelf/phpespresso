@@ -136,6 +136,32 @@
 			}}
 
 		
+		
+		/**
+		* $limit количество элементов на странице
+		*/
+		private function render_main($page = 1, $limit = 10) {
+
+			arsort($this->files);
+			$count = count($this->files);
+			$start = $page*$limit;
+			$end = $atart+$limit;
+			
+			if ($end > $count)
+				$end = $count;
+
+			
+			for ($i=$start;$i<=$end; $i++)
+				$items[$i] = $this->files[$i]; 
+			
+
+			return $items;
+
+
+		}		
+
+
+
 		/**
 		* saved file and create directory
 		*/
