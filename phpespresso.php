@@ -94,47 +94,7 @@
 
 
 		
-		/**
-		* определяем параметры страницы	
-		* @source - файл с основным контентом страницы
-		*/
-		public function render_page($source) {
-			
-			$filename = $this->path['source'].$source;	
-
-			$params = array();
-			$start = False; 
-
-			$handle = @fopen($filename, "r"); 
-			if ($handle) { 
-   				while (!feof($handle)) { 
-       				$str = trim(fgets($handle, 4096));
-       				if ($str == '---')
-       					$start = !$start;
-       				elseif($start) {
-						if ($cparams = $this->parse_param($str)) // если параметр а не пустая строка
-       						$params[$cparams['name']] = $cparams['value'];
-       				}		
-       				else
-       					$content .= "\n".$str;
- 												
-				}	
-   			
-   				$params['source'] = $filename;
-   				$params['content'] = Markdown($content);
-
-   			  	$newfile = $this->path['json'].str_replace('.md','.json', $source);   				
-   				
-   				$this->file_save($newfile, json_encode($params)); //page json
-   				$this->page_html($params, $source);
-
-
-   				$this->files[$params['date']] = $newfile;
-
-   				fclose($handle); 
-
-			}}
-
+		
 		
 		
 		/**
@@ -179,22 +139,7 @@
 
 
 		
-		/**
-		* добавляем порцию параметров
-		*
-		*/
-		private function parse_param($row){
-			
-			$pos = strpos($row, ':');
-						
-			if ($pos > 0) {
-				$name = substr($row, 0, $pos);
-				$value = substr($row, $pos + 1);
 		
-				return array('name'=>trim($name), 'value'=>trim($value));
-			}
-		
-			return False;}
 
 
 		
@@ -233,4 +178,130 @@
 			}
 
 	}		
+
+
+	abstract class es_posts {
+
+		/**
+		* структура базы
+		*/
+		var $struct  = array('title', 'date', 'anons', 'text', 'partname');
+
+		abstract function post($path);
+
+
+
+		function add() {
+
+		}
+
+
+		function pages($page = 1,$limit = 0){
+
+		}
+
+
+
+
+
+
+	}
+
+
+	
+	/**
+	* хранение в md файлах
+	*/
+	class es_md extends es_posts {
+
+
+		function add() {
+			//createfile
+		}
+
+
+		function page() {
+
+		}
+
+
+
+		/**
+		* одиночный пост
+		*/
+		function post($path){
+			$file = $this->path['json'].$path.'.md';
+			if file_exists($file)
+				return json_decode(file_get_contents($file));
+		}
+
+
+		/**
+		* определяем параметры страницы	
+		* @source - файл с основным контентом страницы
+		*/
+		public function render_page($source) {
+			
+			$filename = $this->path['source'].$source;	
+
+			$params = array();
+			$start = False; 
+
+			$handle = @fopen($filename, "r"); 
+			if ($handle) { 
+   				while (!feof($handle)) { 
+       				$str = trim(fgets($handle, 4096));
+       				if ($str == '---')
+       					$start = !$start;
+       				elseif($start) {
+						if ($cparams = $this->parse_param($str)) // если параметр а не пустая строка
+       						$params[$cparams['name']] = $cparams['value'];
+       				}		
+       				else
+       					$content .= "\n".$str;
+ 												
+				}	
+   			
+   				$params['source'] = $filename;
+   				$params['content'] = Markdown($content);
+
+   			  	$newfile = $this->path['json'].str_replace('.md','.json', $source);   				
+   				
+   				$this->file_save($newfile, json_encode($params)); //page json
+   				$this->page_html($params, $source);
+
+
+   				$this->files[$params['date']] = $newfile;
+
+   				return $params;
+
+   				fclose($handle); 
+
+			}}
+
+
+		/**
+		* добавляем порцию параметров
+		*
+		*/
+		private function parse_param($row){
+			
+			$pos = strpos($row, ':');
+						
+			if ($pos > 0) {
+				$name = substr($row, 0, $pos);
+				$value = substr($row, $pos + 1);
+		
+				return array('name'=>trim($name), 'value'=>trim($value));
+			}
+		
+			return False;}	
+
+
+
+
+
+	}
+
+
 
