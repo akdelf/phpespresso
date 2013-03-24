@@ -23,6 +23,7 @@
 		*/
 		function __construct($basedir){
 			
+			$this->path['base'] = $basedir;
 			$this->path['source'] = $basedir.'/app/source/';
 			$this->path['presult'] = $basedir.'/app/html/';
 			$this->path['layer'] = $basedir.'/app/theme/';
@@ -184,19 +185,28 @@
 
 		/**
 		* структура базы
-		*/
-		var $struct  = array('title', 'date', 'anons', 'text', 'partname');
+		*/ 
+		var $struct  = array('title', 'date', 'anons', 'text', 'partname'); # поля хранения данных 
+		var $posts = array(); //список всех постов
+		var $params = array();
 
 		abstract function post($path);
 
 
 
+		function __construct(){
+			$this->params = json_decode(file_get_contents('config.json')); # чтения конфига
+		}
+
+
 		function add() {
+
+			
 
 		}
 
 
-		function pages($page = 1,$limit = 0){
+		function pages($page = 1, $limit = 0){
 
 		}
 
@@ -215,14 +225,126 @@
 	class es_md extends es_posts {
 
 
+		private $pages = array(); # список всех постов
+
+		
+		function __construct(){
+
+			$this->path['base'] = $basedir;
+			$this->path['source'] = $basedir.'/app/source/';
+			$this->path['layer'] = $basedir.'/app/theme/';
+			$this->path['posts'] = $basedir.'/app/json/post/';
+			$this->path['map'] = $basedir.'/app/json/map/';
+
+
+		}
+
 		function add() {
 			//createfile
 		}
 
+	
+		/**
+		* список позиций
+		*/
+		function page($limit, $page = 1) {
 
-		function page() {
+			if (sizeof($this->page) == 0)
+				$this->all();
+
+			$count = sizeof($this->pages);
+			$start = $page * $limit;
+			for ($in=$atart: $n<=$end; $n++){
+				$result[] = $this->pages[$in];
+			}
+
+			return $result; 
+
+
+
+			
+		}
+
+
+		/**
+		* sitemap file
+		*/
+
+		function map() {
+
+			$fmap = $this->path['base'].'/sitemap/';
+			$page_array = array();
+
+			$this->dirlist(); # получаем список всех постов
+			
+			$count = sizeof($this->pages);
+
+			if (sizeof($this->pages) == 0)
+				return False;
+
+
+			arsort($this->pages); # сортируем по последним записям
+			
+			$nn = 0;
+			$page  = 0;
+
+			# разбиваем по страницам
+			for ($p=0; $p <= $count; $p++){
+				$page_array[] = array_shift($this->pages);	
+				if ($nn == $limit or $p == $count){ # бьем порционально на страницы
+					$nn = 0;
+					$page++;
+					file_put_contents($page.'.json', json_encode($page_array));
+					$page_array = array(); # обнуляем массив		
+				}
+			}
+
+				
+			
 
 		}
+
+
+		/*
+		*
+		*/
+		function dirlist($dir) {
+
+			$full_dir = $this->path['source'].$dir;
+			//$fmap = $this->path['base'].'/sitemap/'; 
+
+			$handle = opendir($full_dir);
+			
+			while(($currfile = readdir($handle)) !== false){
+				if ( $currfil == '.' or $currfil == '..' ){
+					continue;
+				elseif is_dir($currfile){
+					$this->dirlist($dir.$currfile);
+				}
+				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
+					$item = $this->post($file);
+        			$uid = $item['date']; # индифицируем по дате создания файла
+					if ($this->params['method'] == 'memory')
+						file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile)));
+					else
+						$this->page[$uid] = $currfile;
+				}	
+
+			}	
+
+			closedir($handle);
+
+
+			return True;
+
+      
+
+        	
+
+		}
+
+
+
 
 
 
@@ -230,17 +352,31 @@
 		* одиночный пост
 		*/
 		function post($path){
-			$file = $this->path['json'].$path.'.md';
-			if file_exists($file)
-				return json_decode(file_get_contents($file));
+			
+			$jfile = $this->path['json'].$path.'.json';
+			$mdfile = $this->path['source'].$path.'.md';
+
+
+			if (file_exists($jfile) and (filemtime($jfile) > filemtime($mdfile))) //сформированный файл проверка актульности
+				return json_decode(file_get_contents($file)); 
+			else {
+				$result = $this->parser_page($path);
+				if ($result !== null)
+					file_put_contents($jfile, json_encode($result));
+		
+			}
+				return $this->render($path);
+				
 		}
+
+		
 
 
 		/**
 		* определяем параметры страницы	
 		* @source - файл с основным контентом страницы
 		*/
-		public function render_page($source) {
+		public function parser_page($source) {
 			
 			$filename = $this->path['source'].$source;	
 

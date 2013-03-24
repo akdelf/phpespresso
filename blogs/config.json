@@ -1,0 +1,6 @@
+{
+	"limit": "20",
+	"source": "markdown",
+	"method": "memory",
+	"memory_limit": "128" 
+}
