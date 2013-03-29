@@ -1,12 +1,13 @@
 <?php 
 
 
-	/**
-	*
-	*/
-
+	
 	require ('markdown/markdown.php');
 
+	
+	/**
+	* controller
+	*/
 	class phpespresso {
 
 		/**
@@ -23,12 +24,7 @@
 		*/
 		function __construct($basedir){
 			
-			$this->path['base'] = $basedir;
-			$this->path['source'] = $basedir.'/app/source/';
-			$this->path['presult'] = $basedir.'/app/html/';
-			$this->path['layer'] = $basedir.'/app/theme/';
-			$this->path['json'] = $basedir.'/cache/json/';
-			$this->path['result'] = $basedir.'/site/';
+			
 			
 			} 
 
@@ -95,7 +91,10 @@
 
 
 		
-		
+		function generation(){
+			$this->map(); //формируем весь список постов
+					
+		}
 		
 		
 		/**
@@ -180,40 +179,40 @@
 
 	}		
 
-
+	/*
+	* model
+	*/
 	abstract class es_posts {
 
 		/**
 		* структура базы
 		*/ 
-		var $struct  = array('title', 'date', 'anons', 'text', 'partname'); # поля хранения данных 
-		var $posts = array(); //список всех постов
+		
+		# поля хранения данных
+		var $model = array('title'=>'varchar(200)', 
+							 'date'=>'datetime', 
+							 'description' => "text", 
+							 'post' => 'text', 
+							 'partname' => 'tinyint(4)'
+						);  
+		
+
+		var $posts = array(); # список всех постов
 		var $params = array();
 
-		abstract function post($path);
+		abstract function post($path); # генерация определенного поста
+		abstract function map(); # формирование карты сайта - все посты
+		abstract function config();
 
 
 
 		function __construct(){
 			$this->params = json_decode(file_get_contents('config.json')); # чтения конфига
+			$this->config(); # локальные параметры
 		}
 
 
-		function add() {
-
-			
-
-		}
-
-
-		function pages($page = 1, $limit = 0){
-
-		}
-
-
-
-
-
+		
 
 	}
 
@@ -228,7 +227,7 @@
 		private $pages = array(); # список всех постов
 
 		
-		function __construct(){
+		function config(){
 
 			$this->path['base'] = $basedir;
 			$this->path['source'] = $basedir.'/app/source/';
@@ -250,13 +249,18 @@
 		function page($limit, $page = 1) {
 
 			if (sizeof($this->page) == 0)
-				$this->all();
+				$this->map();
 
 			$count = sizeof($this->pages);
 			$start = $page * $limit;
+
+
 			for ($in=$atart: $n<=$end; $n++){
 				$result[] = $this->pages[$in];
 			}
+
+			print_r($result);
+
 
 			return $result; 
 
@@ -289,7 +293,7 @@
 			$page  = 0;
 
 			# разбиваем по страницам
-			for ($p=0; $p <= $count; $p++){
+			/*for ($p=0; $p <= $count; $p++){
 				$page_array[] = array_shift($this->pages);	
 				if ($nn == $limit or $p == $count){ # бьем порционально на страницы
 					$nn = 0;
@@ -297,10 +301,7 @@
 					file_put_contents($page.'.json', json_encode($page_array));
 					$page_array = array(); # обнуляем массив		
 				}
-			}
-
-				
-			
+			}*/
 
 		}
 
@@ -342,8 +343,6 @@
         	
 
 		}
-
-
 
 
 

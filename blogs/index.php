@@ -5,7 +5,7 @@
 
 	//генериим сайт
 	$expresso = new phpespresso(__DIR__);
-	$expresso->generation();
+	$expresso->page(10, 1);
 	
 
 

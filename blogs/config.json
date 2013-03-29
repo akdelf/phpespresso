@@ -1,6 +1,7 @@
 {
 	"limit": "20",
-	"source": "markdown",
+	"source": "md",
+	"generation": "files",
 	"method": "memory",
 	"memory_limit": "128" 
 }
