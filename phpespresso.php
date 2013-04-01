@@ -4,6 +4,21 @@
 	
 	require ('markdown/markdown.php');
 
+/*
+	контроллер
+
+		генерация главной страницы + страниц с анонсами
+		генерация каждой страницы 
+
+		запусk шаблонизатора
+
+
+	модель
+		список всех постов
+		информация по каждому посту	
+
+*/
+
 	
 	/**
 	* controller
@@ -29,12 +44,21 @@
 			} 
 
 
+		
+
+
+
 		/**
 		* формируем из шаблона готовую html страницу
 		*/
 		function render() {
 
 			}
+
+
+		function generation() {
+
+			}	
 
 
 		/**
@@ -202,7 +226,9 @@
 
 		abstract function post($path); # генерация определенного поста
 		abstract function map(); # формирование карты сайта - все посты
-		abstract function config();
+		abstract function config(); # загрузка файла конфига
+		abstract function # генерация главной страницы и архива с запуском шаблона
+		abstract function #  генерация конкретной страницы с запуском шаблока
 
 
 
@@ -221,10 +247,11 @@
 	/**
 	* хранение в md файлах
 	*/
-	class es_md extends es_posts {
+	class phpespresso_md extends es_posts {
 
 
 		private $pages = array(); # список всех постов
+		private $posts = 0; # общее кол-во постов
 
 		
 		function config(){
@@ -244,7 +271,7 @@
 
 	
 		/**
-		* список позиций
+		* постраничные анонсы
 		*/
 		function page($limit, $page = 1) {
 
@@ -259,21 +286,25 @@
 				$result[] = $this->pages[$in];
 			}
 
-			print_r($result);
-
-
 			return $result; 
-
-
-
 			
 		}
 
 
 		/**
-		* sitemap file
+		* count posts
 		*/
+		function posts() {
 
+			
+
+		}
+
+		
+
+		/**
+		* create sitemap file
+		*/
 		function map() {
 
 			$fmap = $this->path['base'].'/sitemap/';
@@ -402,15 +433,15 @@
 
    			  	$newfile = $this->path['json'].str_replace('.md','.json', $source);   				
    				
-   				$this->file_save($newfile, json_encode($params)); //page json
+   				$this->file_save($newfile, json_encode($params)); // page json
    				$this->page_html($params, $source);
 
 
    				$this->files[$params['date']] = $newfile;
 
-   				return $params;
+   				fclose($handle);
 
-   				fclose($handle); 
+   				return $params; 
 
 			}}
 
