@@ -338,9 +338,9 @@
 
 
 		/*
-		*
+		* сканируем файлы в папке вместе с подпапками
 		*/
-		function dirlist($dir) {
+		function dirlist($dir, $ext = 'md') {
 
 			$full_dir = $this->path['source'].$dir;
 			//$fmap = $this->path['base'].'/sitemap/'; 
@@ -353,13 +353,11 @@
 				elseif is_dir($currfile){
 					$this->dirlist($dir.$currfile);
 				}
-				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
+				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == $ext){
 					$item = $this->post($file);
         			$uid = $item['date']; # индифицируем по дате создания файла
-					if ($this->params['method'] == 'memory')
-						file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile)));
-					else
-						$this->page[$uid] = $currfile;
+					//file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile)));
+					$files[$uid] = $currfile;
 				}	
 
 			}	
@@ -367,7 +365,7 @@
 			closedir($handle);
 
 
-			return True;
+			return $files;
 
       
 
