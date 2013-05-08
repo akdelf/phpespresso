@@ -4,8 +4,10 @@
 	require '../phpespresso.php';
 
 	//генериим сайт
-	$expresso = new phpespresso(__DIR__);
-	$expresso->page(10, 1);
+	$espresso = new phpespresso(__DIR__);
+	$espresso->map();
+
+	//$expresso->page(10, 1);
 	
 
 
