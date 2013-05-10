@@ -26,6 +26,8 @@
 			$this->path['posts'] = $this->basedir.'/app/json/post/';
 			$this->path['map'] = $this->basedir.'/app/json/map/';
 
+
+
 			return $this;
 
 		}
@@ -54,7 +56,7 @@
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
 					$params = $this->parser_page($dir.$currfile);
 					$uid = $params['date']; # индифицируем по дате создания файла
-					//file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile)));
+					file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile))); # формируем карту сайта
 					$this->pages[$uid] = $currfile;
 				}	
 
@@ -80,9 +82,6 @@
 			if (sizeof($this->pages) == 0)
 				return False;
 
-
-			print_r($this->pages);
-
 			arsort($this->pages); # сортируем по последним записям
 			
 			$nn = 0;
@@ -99,7 +98,7 @@
 		* определяем параметры страницы	
 		* @source - файл с основным контентом страницы
 		*/
-		public function parser_page($filename) {
+		private function parser_page($filename) {
 						
 			$params = array();
 			$start = False; 
@@ -122,7 +121,8 @@
    				$params['source'] = $filename;
    				$params['content'] = Markdown($content);
 
-   			  	$newfile = $this->path['json'].str_replace('.md','.json', $source);   				
+   			  	$newfile = $this->path['json'].str_replace('.md','.json', $source); 
+   			  	file_put_contents($newfile, json_encode($params)); # формируем карту сайта  				
    				
    				//$this->file_save($newfile, json_encode($params)); // page json
    				//$this->page_html($params, $source);
