@@ -1,3 +1,4 @@
-cache/*.*
-site/*.*
-app/json/*.*
+blogs/cache/*.*
+blogs/_maps/*.*
+blogs/_site/*.*
+

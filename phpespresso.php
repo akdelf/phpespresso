@@ -16,7 +16,7 @@
 
 		
 		function __construct($dir){
-			$this->basedir = $dir;
+			$this->basedir = $dir.'/';
 			$this->params = json_decode(file_get_contents('config.json')); # чтения конфига
 			$this->config(); # локальные параметры
 		}
@@ -24,17 +24,12 @@
 
 		function config(){
 
-			$this->path['base'] = $this->basedir;
-			
-			$this->path['source'] = $this->basedir.'/app/source/'; //исходники в md
-			
-			$this->path['layer'] = $this->basedir.'/app/theme/'; //внешний вид
-			
-			$this->path['posts'] = $this->basedir.'/app/json/posts/'; // информация о постах
+			// пути исповедимы
 
-			$this->path['map'] = $this->basedir.'/app/json/map/';
-
-
+			$this->posts = $this->basedir.'_posts/'; //исходники в md
+			$this->layouts = $this->basedir.'_layouts/'; //внешний вид
+			$this->maps = $this->basedir.'_maps/';
+			$this->site = $this->basedir.'_site/';
 
 			return $this;
 
@@ -47,8 +42,8 @@
 		function dirlist($dir = '') {
 
 			 
-			$fulldir = $this->path['source'].$dir.'/'; // full name folder
-
+			$fulldir = $this->posts.$dir.'/'; // full name folder
+			
 			if (false == ($handle = @opendir($fulldir)))
 				return null;
 						
@@ -63,17 +58,17 @@
 				}
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
 					$params = $this->parser_page($dir.$currfile);
-					$uid = $params['date']; # индифицируем по дате создания файла
-					//file_put_contents($this->path['map'].$uid.'.json', json_encode(array('file'=>$currfile))); # формируем карту сайта
-					$this->pages[$uid] = $params['source'];
+					$pages[$params['date']] = $params['post'];
 				}	
 
 			}	
 
+			
 			closedir($handle);
+		
+			
 
-						
-			return $files;
+			return $pages;
 
 		}
 
@@ -82,23 +77,19 @@
 		*/
 		function map() {
 
-			$fmap = $this->path['base'].'/sitemap/';
-			
-			$this->dirlist(); # получаем список всех постов
-									
-			$count = sizeof($this->pages);
+						
+			$pages = $this->dirlist(); # получаем список всех постов
+			$count = sizeof($pages);
 
-			if (sizeof($this->pages) == 0)
+			
+			if (sizeof($pages) == 0)
 				return False;
 
-			arsort($this->pages); # сортируем по последним записям
+			krsort($pages); # сортируем по последним записям
 
-			$nn = 0;
-			$page  = 0;
+			$this->fsave($this->maps.'pages.json', json_encode($pages));  // сохраняем карту сайта
 
-			print_r($this->pages);
-
-			return $this->pages;
+			return $pages;
 
 		}	
 
@@ -111,11 +102,12 @@
 		*/
 		public function parser_page($filename) {
 						
-			$fsource = $this->path['source'].$filename;
-			$fjson = $this->path['posts'].str_replace('.md','.json', $filename);
+			$name = substr($filename, 0, -3); //имя поста без расширения
+			$fsource = $this->posts.$filename;
+			$fmap = $this->maps.'posts/'.$name.'.json';
 
-			if (file_exists($fjson) and filectime($fjson) > filectime($fsource))
-				return json_decode(file_get_contents($fjson), True);
+			if (file_exists($fmap) and filectime($fmap) > filectime($fsource))
+				return json_decode(file_get_contents($fmap), True);
 
 			$params = array();
 			$start = False; 
@@ -140,26 +132,18 @@
  												
 				}	
    			
-   				$params['source'] = $filename;
-   				$params['content'] = Markdown($content);
+   				if (!isset($params['date']))
+   					$params['date'] = date("Y-m-d H:i", filectime($fsource));
 
-   			  	   			  	
-   			  	if (!is_writable($fjson)) {
-					$newdir = dirname($fjson);
-					if (!is_dir($newdir)){
-						if (!mkdir($newdir, 0777, True))
-							return False;
-					}	
-   			  	}
-
-
-   			  	file_put_contents($fjson, json_encode($params)); # формируем карту сайта  				
+   				$params['post'] = $filename;
+				$params['content'] = Markdown($content);
    				
-   				//$this->file_save($newfile, json_encode($params)); // page json
-   				//$this->page_html($params, $source);
-
-
-   				//$this->files[$params['date']] = $newfile;
+   				
+   				//save page html
+   				//$this->fsave($this->site.str_replace('-', '/', $name).'.html', $content);
+			 	
+   				//save map post
+   				$this->fsave($fmap, json_encode($params));
 
    				fclose($handle);
 
@@ -169,6 +153,26 @@
 		}
 
 
+
+		
+		/**
+		* сохранение файла и создания папки под него
+		*/
+		private function fsave($filename, $value){
+						
+			$dir = dirname($filename);
+
+			if (!is_dir($dir)){
+				if (!mkdir($dir, 0755, True))
+					die ("невозможно создать папку $dir");
+			}	
+
+			
+			return file_put_contents($filename, $value);
+
+		}
+
+		
 
 		/**
 		* добавляем порцию параметров
