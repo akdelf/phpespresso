@@ -30,6 +30,7 @@
 			$this->layouts = $this->basedir.'_layouts/'; //внешний вид
 			$this->maps = $this->basedir.'_maps/';
 			$this->site = $this->basedir.'_site/';
+			$this->cache = $this->basedir.'cache/';
 
 			return $this;
 
@@ -87,14 +88,16 @@
 
 			krsort($pages); # сортируем по последним записям
 
-			$this->fsave($this->maps.'pages.json', json_encode($pages));  // сохраняем карту сайта
+			$nn = 0;
+			$page = 1;
 
+			//$this->fsave($this->maps.'pages.json', json_encode($pages));  // сохраняем карту сайта
+			
 			return $pages;
 
-		}	
+		}
 
-
-
+	
 
 		/**
 		* определяем параметры страницы	
@@ -106,6 +109,8 @@
 			$fsource = $this->posts.$filename;
 			$fmap = $this->maps.'posts/'.$name.'.json';
 
+			
+			// cache json backend
 			if (file_exists($fmap) and filectime($fmap) > filectime($fsource))
 				return json_decode(file_get_contents($fmap), True);
 
@@ -132,15 +137,18 @@
  												
 				}	
    			
+   				$content = Markdown($content);
+   				
+   				//save html content
+   				$this->fsave($this->site.str_replace('-', '/', $name).'.html', $content);
+
+
    				if (!isset($params['date']))
    					$params['date'] = date("Y-m-d H:i", filectime($fsource));
 
-   				$params['post'] = $filename;
-				$params['content'] = Markdown($content);
+   				$params['post'] = $name;
+				   				
    				
-   				
-   				//save page html
-   				//$this->fsave($this->site.str_replace('-', '/', $name).'.html', $content);
 			 	
    				//save map post
    				$this->fsave($fmap, json_encode($params));
@@ -158,8 +166,13 @@
 		/**
 		* сохранение файла и создания папки под него
 		*/
-		private function fsave($filename, $value){
+		private function fsave($filename, $value = ''){
 						
+			echo "\n".$filename."\n";
+
+			if ($value == '')
+				return False;
+
 			$dir = dirname($filename);
 
 			if (!is_dir($dir)){
