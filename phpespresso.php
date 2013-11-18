@@ -83,13 +83,32 @@
 			$count = sizeof($pages);
 
 			
-			if (sizeof($pages) == 0)
+			if (count == 0)
 				return False;
 
 			krsort($pages); # сортируем по последним записям
 
-			$nn = 0;
+			/*$nn = 0;
 			$page = 1;
+			$limit = 20;
+			$curr = array();
+
+			foreach ($pages as $page) {
+				
+				$nn ++;
+				$curr[] = $page;
+				
+				if ($nn == $limit) {  //бьем постранично
+					$nn = 0;
+					$this->fsave($this->maps.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта
+					$page ++;
+					$curr = array();
+
+				}
+
+			
+
+			}*/
 
 			//$this->fsave($this->maps.'pages.json', json_encode($pages));  // сохраняем карту сайта
 			
@@ -99,17 +118,13 @@
 
 	
 
-		/**
-		* определяем параметры страницы	
-		* @source - файл с основным контентом страницы
-		*/
-		public function parser_page($filename) {
-						
-			$name = substr($filename, 0, -3); //имя поста без расширения
-			$fsource = $this->posts.$filename;
+		
+		//информация по отдельной странице
+		public function page($name){
+
+			$fsource = $this->posts.$name.'.md';
 			$fmap = $this->maps.'posts/'.$name.'.json';
 
-			
 			// cache json backend
 			if (file_exists($fmap) and filectime($fmap) > filectime($fsource))
 				return json_decode(file_get_contents($fmap), True);
@@ -135,29 +150,56 @@
        				else
        					$content .= "\n".$str;
  												
-				}	
-   			
-   				$content = Markdown($content);
-   				
-   				//save html content
-   				$this->fsave($this->site.str_replace('-', '/', $name).'.html', $content);
+				}
 
+				fclose($handle);	
+   			
+   				$params['content'] = Markdown($content);
 
    				if (!isset($params['date']))
    					$params['date'] = date("Y-m-d H:i", filectime($fsource));
 
-   				$params['post'] = $name;
-				   				
-   				
-			 	
    				//save map post
-   				$this->fsave($fmap, json_encode($params));
+                $this->fsave($fmap, json_encode($params));
 
-   				fclose($handle);
+   				return $params;
 
-   				return $params; 
+   			}
 
-			}
+		}
+
+
+
+
+		/**
+		* определяем параметры страницы	
+		* @source - файл с основным контентом страницы
+		*/
+		public function parser_page($filename) {
+						
+			$name = substr($filename, 0, -3); //имя поста без расширения
+			$c = $this->page($name);
+
+			$this->render($this->site.'posts/'.str_replace('-', '/', $name).'.html', $c);
+
+			
+		}
+
+
+
+		/*
+		* формируем html страницы на основе шаблона
+		*/
+		private function render($file, $c) {
+
+			ob_start();
+				include ($this->layouts.'app.phtml');
+				$result = trim(ob_get_contents());
+			ob_end_clean();
+
+			return $this->fsave($file, $result);
+
+
 		}
 
 
@@ -168,8 +210,6 @@
 		*/
 		private function fsave($filename, $value = ''){
 						
-			echo "\n".$filename."\n";
-
 			if ($value == '')
 				return False;
 
