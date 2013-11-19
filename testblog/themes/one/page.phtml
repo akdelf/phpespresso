@@ -1,5 +1,5 @@
 <ul>
-	<?foreach ($c['pages'] as $page):?>
-		<li><?=$page?></li>
+	<?foreach ($c as $page):?>
+		<li><a href="post/<?=$page['name']?>.html"><?=$page['title']?></li>
 	<?endforeach?>
 </ul>

@@ -44,15 +44,15 @@
 			$this->backend = $site.'backend/'; //папка где будут лежать сгенерированный json бэкенд 
 			
 			
-			$pages = $this->dirlist(); //натравляем папку с постами
+			$items = $this->dirlist(); //натравляем папку с постами
 
-			$count = sizeof($pages); // количество страниц в блоге
+			$count = sizeof($items); // количество страниц в блоге
 
 			
 			if ($count == 0)
 				return False;
 
-			krsort($pages); # сортируем по последним записям
+			krsort($items); # сортируем по последним записям
 
 			$nn = 0;
 			$pnn = 0;
@@ -61,18 +61,17 @@
 			$curr = array();
 			$fpage = $site.'index.html'; //первая страница
 
-			foreach ($pages as $page) {
+			foreach ($items as $item) {
 				
-				$nn ++;
-				$pnn ++;
-				$curr[] = $page;
+				$nn ++; // общее кол-во элементов
+				$pnn ++; // количество на странице
+				$curr[] = $item;
 				
 				if ($pnn == $limit or $nn == $count) {  //бьем постранично
 					if ($page > 1)
 						$fpage = $this->site.'page/'.$page.'.html';
-
-					$c['pages'] = $curr;
-				$	this->view($this->theme.'page.phtml', $fpage, $c); // создаем страницу анонса статей
+					
+					$this->render_page($this->theme.'page.phtml', $fpage, $curr, $this->theme.'app.phtml'); // создаем страницу анонса статей
 					
 				//$this->fsave($this->maps.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта
 					$page ++;
@@ -114,7 +113,7 @@
 				}
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
 					$params = $this->parser_page($dir.$currfile);
-					$pages[$params['date']] = $params['name'];
+					$pages[$params['date']] = $params;
 				}	
 
 			}	
@@ -153,8 +152,6 @@
 		public function page($name){
 
 			$fsource = $this->posts.'/'.$name.'.md';
-
-			echo "\n\n".$fsource."\n\n";
 
 			$fjson = $this->backend.'posts/'.$name.'.json';
 
@@ -240,7 +237,7 @@
 
 			ob_start();
                 include ($view);
-                $content = trim(ob_get_contents());
+                $c['content'] = trim(ob_get_contents());
             ob_end_clean();
 
             if ($layout == '') // если есть центральный шаблон
@@ -278,7 +275,7 @@
 
 
 			ob_start();
-				include ($this->layouts.'app.phtml');
+				include ($this->theme.'app.phtml');
 				$result = trim(ob_get_contents());
 			ob_end_clean();
 
