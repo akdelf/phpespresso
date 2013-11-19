@@ -72,7 +72,7 @@
 						$fpage = $this->site.'page/'.$page.'.html';
 
 					$c['pages'] = $curr;
-					$this->view($this->theme.'page.phtml', $fpage, $c); // создаем страницу анонса статей
+				$	this->view($this->theme.'page.phtml', $fpage, $c); // создаем страницу анонса статей
 					
 				//$this->fsave($this->maps.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта
 					$page ++;
@@ -137,7 +137,7 @@
 			$name = substr($filename, 0, -3); //имя поста без расширения
 			$c = $this->page($name);
 			$c['name'] = $name;
-			$html_page = $this->site.'posts/'.str_replace('-', '/', $name).'.html'; // итоговый html страница
+			$html_page = $this->site.'post/'.str_replace('-', '/', $name).'.html'; // итоговый html страница
 
 			$this->pageview($this->theme.'app.phtml', $html_page, $c);
 
