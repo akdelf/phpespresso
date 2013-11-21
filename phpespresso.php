@@ -44,7 +44,7 @@
 			$this->backend = $site.'backend/'; //папка где будут лежать сгенерированный json бэкенд 
 			
 			
-			$items = $this->dirlist(); //натравляем папку с постами
+			$items = $this->init(); //натравляем папку с постами
 
 			$count = sizeof($items); // количество страниц в блоге
 
@@ -72,23 +72,39 @@
 						$fpage = $this->site.'page/'.$page.'.html';
 					
 					$this->render_page($this->theme.'page.phtml', $fpage, $curr, $this->theme.'app.phtml'); // создаем страницу анонса статей
+					$this->fsave($this->backend.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта побитую на страницы
 					
-				//$this->fsave($this->maps.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта
 					$page ++;
 					$pnn = 0;
+					
 					$curr = array(); //сброс массива
 
 				}
 
 			}
 
-			//$this->fsave($this->maps.'pages.json', json_encode($pages));  // сохраняем карту сайта
-			
-			
-
 		}
 
 
+		private function init() {
+
+			$len = strlen($this->posts);
+
+			//главные разделы
+			$maindirs = glob($this->posts.'/*', GLOB_ONLYDIR);
+			
+			if (sizeof($maindirs) > 1) {
+				foreach($maindirs as $maindir){
+					$sections[] = substr($maindir, $len + 1);
+				}
+			}
+
+			print_r($sections);
+
+			return;
+		}
+
+		
 
 
 		/*
@@ -97,6 +113,24 @@
 		function dirlist($dir = '') {
 
 			 
+			$len = strlen($this->posts);
+
+			//главные разделы
+			$maindirs = glob($this->posts.'/*', GLOB_ONLYDIR);
+			
+			if (sizeof($maindirs) > 1) {
+				foreach($maindirs as $maindir){
+					$sections[] = substr($maindir, $len + 1);
+				}
+			}
+
+			
+			print_r($sections);
+
+			exit;
+
+
+
 			$fulldir = $this->posts.$dir.'/'; // full name folder
 
 			if (false == ($handle = @opendir($fulldir)))
@@ -199,19 +233,6 @@
 		}
 
 
-
-
-		
-
-		/*
-		*  рендринг шаблонов
-		*/
-
-
-
-
-
-
 		/*
 		* рендрим пост в рамках шаблона
 		*/
@@ -226,8 +247,6 @@
 
 		}
 
-
-		
 
 
 		/*
