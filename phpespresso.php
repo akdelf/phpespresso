@@ -46,6 +46,8 @@
 			
 			$items = $this->init(); //натравляем папку с постами
 
+			exit;
+
 			$count = sizeof($items); // количество страниц в блоге
 
 			
@@ -91,16 +93,21 @@
 			$len = strlen($this->posts);
 
 			//главные разделы
-			$maindirs = glob($this->posts.'/*', GLOB_ONLYDIR);
-			
-			if (sizeof($maindirs) > 1) {
+			$maindirs = glob($this->posts.'/*', GLOB_ONLYDIR|GLOB_NOSORT);
+
+
+									
+			if (sizeof($maindirs) > 0) {
 				foreach($maindirs as $maindir){
-					$sections[] = substr($maindir, $len + 1);
+					$name = substr($maindir, $len + 1);
+					$publs[$name] = $this->dirlist($maindir);
 				}
 			}
 
-			print_r($sections);
+			// массивы главных директорий
+			// прошел одну директорию осортировал убил массив или склеил
 
+						
 			return;
 		}
 
@@ -110,40 +117,42 @@
 		/*
 		* сканируем файлы в папке вместе с подпапками
 		*/
-		function dirlist($dir = '') {
+		function dirlist($dir) {
 
-			 
-			$len = strlen($this->posts);
+			echo $dir."\n\n";
 
-			//главные разделы
-			$maindirs = glob($this->posts.'/*', GLOB_ONLYDIR);
+			$pages = glob($dir."/*.md");
+
+			print_r($pages);
+
 			
-			if (sizeof($maindirs) > 1) {
-				foreach($maindirs as $maindir){
-					$sections[] = substr($maindir, $len + 1);
-				}
+			return;
+
+			
+
+			foreach ($pages as $page){
+
 			}
 
-			
-			print_r($sections);
-
-			exit;
 
 
-
-			$fulldir = $this->posts.$dir.'/'; // full name folder
-
-			if (false == ($handle = @opendir($fulldir)))
+			if (false == ($handle = @opendir($dir)))
 				return null;
 						
 			$pages = array();
 
+			print_r(glob($dir."/*.md"));
+
+
+
 			while(($currfile = readdir($handle)) !== false){
+				
+				echo "\n\n".$currfile."\n\n";
 				
 				if ( $currfile == '.' or $currfile == '..' )
 					continue;
-				elseif (is_dir($fulldir.$currfile)){
-					$this->dirlist($dir.$currfile.'/');
+				elseif (is_dir($dir.'/'.$currfile)){
+					$this->dirlist($dir.'/'.$currfile);
 				}
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
 					$params = $this->parser_page($dir.$currfile);
