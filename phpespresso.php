@@ -13,6 +13,7 @@
 
 		public $pages = array();
 		public $path = array();
+		public $rubrics = array();
 
 		
 		function __construct($dir) {
@@ -39,16 +40,26 @@
 
 		//генерим сайт
 		function render($site) {
-
+			
 			$this->site = $site; //итоговая папка для рединга
 			$this->backend = $site.'backend/'; //папка где будут лежать сгенерированный json бэкенд 
 			
+			//$this->rubrics(); //узнаем есть ли подрубрики
+
+			/*if (sizeof($this->rubrics) > 0) {
+				foreach ($this->rubrics => $rubric){
+					$rubitems = $this->dirlist();
+
+				}
+			}
+			else*/
 			
 			$items = $this->dirlist(); //натравляем папку с постами
-
 			$count = sizeof($items); // количество страниц в блоге
 
 			
+			print_r($this->rubrics);
+
 			if ($count == 0)
 				return False;
 
@@ -72,6 +83,7 @@
 						$fpage = $this->site.'page/'.$page.'.html';
 					
 					$this->render_page($this->theme.'page.phtml', $fpage, $curr, $this->theme.'app.phtml'); // создаем страницу анонса статей
+					$this->fsave($this->backend.'page'.$page.'.json', json_encode($curr)); //сохраняем в backend
 					
 				//$this->fsave($this->maps.'page'.$page.'.json', json_encode($curr));  // сохраняем карту сайта
 					$page ++;
@@ -90,6 +102,41 @@
 
 
 
+		
+		// есть ли подрубрики
+		function rubrics(){
+
+			$fulldir = $this->posts.$dir.'/'; 
+
+			if (false == ($handle = @opendir($fulldir)))
+				return null;
+
+			$rubrics  = array();
+
+			while(($currfile = readdir($handle)) !== false){
+
+				if ( $currfile == '.' or $currfile == '..' )
+					continue;
+
+				if (is_dir($fulldir.$currfile)){
+					$rubrics[] = $currfile;
+				}
+
+			}
+
+			$count = sizeof($rubrics);
+
+			if ($count > 1) {
+				$this->rubrics = $rubrics;
+				return True;
+			}
+
+
+			return False;
+
+		}	
+		
+
 
 		/*
 		* сканируем файлы в папке вместе с подпапками
@@ -102,17 +149,20 @@
 			if (false == ($handle = @opendir($fulldir)))
 				return null;
 						
+			
 			$pages = array();
 
 			while(($currfile = readdir($handle)) !== false){
 				
+				
 				if ( $currfile == '.' or $currfile == '..' )
 					continue;
 				elseif (is_dir($fulldir.$currfile)){
+					$this->rubrics[] = $currfile; // есть в блоге рубрики
 					$this->dirlist($dir.$currfile.'/');
 				}
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
-					$params = $this->parser_page($dir.$currfile);
+					$params = $this->parser_page($currfile, $dir);
 					$pages[$params['date']] = $params;
 				}	
 
@@ -131,12 +181,16 @@
 		* определяем параметры страницы	
 		* @source - файл с основным контентом страницы
 		*/
-		public function parser_page($filename) {
+		public function parser_page($filename, $dir = '') {
 						
 			$name = substr($filename, 0, -3); //имя поста без расширения
 			$c = $this->page($name);
 			$c['name'] = $name;
-			$html_page = $this->site.'post/'.str_replace('-', '/', $name).'.html'; // итоговый html страница
+
+			if ($dir = '') // по умолчанию папка post
+				$dir = 'post';
+
+			$html_page = $this->site.$dir.'/'.str_replace('-', '/', $name).'.html'; // итоговый html страница
 
 			$this->pageview($this->theme.'app.phtml', $html_page, $c);
 
