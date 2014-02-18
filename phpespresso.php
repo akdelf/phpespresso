@@ -18,8 +18,8 @@
 		
 		function __construct($dir) {
 			
-			$this->basedir = $dir.'/';
-			$this->posts = $this->basedir.'posts'; //исходники в mardown
+			$this->basedir = $dir.DIRECTORY_SEPARATOR;
+			$this->posts = $this->basedir.'posts'.DIRECTORY_SEPARATOR; //исходники в mardown
 
 			// подгрузка файла конфига
 			$fconfig = $this->basedir.'config.json'; 
@@ -55,16 +55,26 @@
 			else*/
 			
 			$rubrics = $this->rubrics(); //верхний каталог рубрики
-			
-
-			
+			$pages = array();		
+		
 
 			foreach($rubrics as $rubric) {
+				$ritems = array();
 				$ritems = $this->dirlist($rubric);
-				print_r($ritems);			
+				
+				//создать страницу с панигатором для рубрики			
+
+				if (isset($ritems)) {
+					$items = $items + $ritems;	
+				}
+
+				
 			}
 
+			# создать гл страницы с панигатром
 
+			krsort($items); # сортируем по последним записям
+			print_r($items);
 
 			exit;
 
@@ -114,11 +124,21 @@
 
 
 
-		
-		// есть ли подрубрики
-		function rubrics($dir = ''){
+		function paginator($items = array()){
 
-			$fulldir = $this->posts.$dir.'/'; 
+			foreach($items as $item) {
+				
+			}
+
+
+		}
+		
+
+		// сканируем подрубрики
+		function rubrics(){
+
+			$fulldir = $this->posts; 
+
 
 			if (false == ($handle = @opendir($fulldir)))
 				return null;
@@ -150,7 +170,7 @@
 		*/
 		function dirlist($dir = '') {
 
-			$fulldir = $this->posts.DIRECTORY_SEPARATOR;
+			$fulldir = $this->posts;
 
 			if ($dir !== '')
 				$fulldir .= $dir.DIRECTORY_SEPARATOR;
@@ -158,8 +178,6 @@
 			if (false == ($handle = @opendir($fulldir)))
 				return null;
 						
-			echo $fulldir."\n\n";
-
 			$pages = array();
 
 			while(($currfile = readdir($handle)) !== false){
@@ -193,16 +211,14 @@
 		public function parser_page($filename, $dir = '') {
 						
 			$name = substr($filename, 0, -3); //имя поста без расширения
-			$c = $this->page($name);
+			$c = $this->page($name, $dir);
 			$c['name'] = $name;
 
 			if ($dir = '') // по умолчанию папка post
 				$dir = 'post';
 
-			$html_page = $this->site.$dir.'/'.str_replace('-', '/', $name).'.html'; // итоговый html страница
-
-			$this->pageview($this->theme.'app.phtml', $html_page, $c);
-
+			$html_page = $this->site.$dir.DIRECTORY_SEPARATOR.str_replace('-', '/', $name).'.html'; // сохраняем в html
+			$this->pageview($this->theme.'app.phtml', $html_page, $c); // сохраняем в json
 
 			
 			return $c;
@@ -212,19 +228,19 @@
 
 		
 		//информация по отдельной странице
-		public function page($name){
+		public function page($name, $dir){
 
-			$fsource = $this->posts.'/'.$name.'.md';
-
+			$fsource = $this->posts.$dir.DIRECTORY_SEPARATOR.$name.'.md';
 			$fjson = $this->backend.'posts/'.$name.'.json';
 
 			// cache json backend
-			if (file_exists($fjson) and filectime($fjson) > filectime($fsource))
-				return json_decode(file_get_contents($fjson), True);
+			/*if (file_exists($fjson) and filectime($fjson) > filectime($fsource))
+				return json_decode(file_get_contents($fjson), True);*/
 
 			$params = array();
 			$start = False; 
 
+			
 			if ( !is_readable($fsource) )
 				die ("can't read " . $fsource);
 
@@ -247,11 +263,13 @@
 
 				fclose($handle);	
    			
+   				
    				$params['content'] = Markdown($content);
 
    				if (!isset($params['date']))
-   					$params['date'] = date("Y-m-d H:i", filectime($fsource));
-
+   					//$params['date'] = date("Y-m-d H:i", filectime($fsource));
+   					$params['date'] = filectime($fsource);
+   				
    				//save map post
                 $this->fsave($fjson, json_encode($params));
 
