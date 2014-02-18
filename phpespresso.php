@@ -54,11 +54,23 @@
 			}
 			else*/
 			
-			$items = $this->dirlist(); //натравляем папку с постами
-			$count = sizeof($items); // количество страниц в блоге
+			$rubrics = $this->rubrics(); //верхний каталог рубрики
+			
 
 			
-			print_r($this->rubrics);
+
+			foreach($rubrics as $rubric) {
+				$ritems = $this->dirlist($rubric);
+				print_r($ritems);			
+			}
+
+
+
+			exit;
+
+
+			$items = $this->dirlist(); //натравляем папку с постами
+			$count = sizeof($items); // количество страниц в блоге
 
 			if ($count == 0)
 				return False;
@@ -104,7 +116,7 @@
 
 		
 		// есть ли подрубрики
-		function rubrics(){
+		function rubrics($dir = ''){
 
 			$fulldir = $this->posts.$dir.'/'; 
 
@@ -124,15 +136,10 @@
 
 			}
 
-			$count = sizeof($rubrics);
-
-			if ($count > 1) {
-				$this->rubrics = $rubrics;
-				return True;
-			}
-
-
-			return False;
+			if (sizeof($rubrics) > 1)
+				return $rubrics;
+			else
+				return False;
 
 		}	
 		
@@ -143,23 +150,25 @@
 		*/
 		function dirlist($dir = '') {
 
-			 
-			$fulldir = $this->posts.$dir.'/'; // full name folder
+			$fulldir = $this->posts.DIRECTORY_SEPARATOR;
+
+			if ($dir !== '')
+				$fulldir .= $dir.DIRECTORY_SEPARATOR;
 
 			if (false == ($handle = @opendir($fulldir)))
 				return null;
 						
-			
+			echo $fulldir."\n\n";
+
 			$pages = array();
 
 			while(($currfile = readdir($handle)) !== false){
-				
-				
+								
 				if ( $currfile == '.' or $currfile == '..' )
 					continue;
 				elseif (is_dir($fulldir.$currfile)){
 					$this->rubrics[] = $currfile; // есть в блоге рубрики
-					$this->dirlist($dir.$currfile.'/');
+					$this->dirlist($dir.DIRECTORY_SEPARATOR.$currfile);
 				}
 				elseif(pathinfo($currfile, PATHINFO_EXTENSION) == 'md'){
 					$params = $this->parser_page($currfile, $dir);
